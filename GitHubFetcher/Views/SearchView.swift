@@ -107,7 +107,7 @@ struct SearchView: View {
                                 ForEach(vm.favorites) { repo in
                                     NavigationLink {
                                         //RepoDashboardView(repo: repo, token: "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")   // ✅ keep this simple
-                                        RepoDashboardView(fullName: repo.fullName, token: "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", context: context)
+                                        RepoDashboardView(fullName: repo.fullName, token: "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", context: context, searchVM: vm)
                                     } label: {
                                         RepoRow(
                                             repo: repo,

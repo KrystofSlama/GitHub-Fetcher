@@ -11,18 +11,19 @@ import SwiftData
 struct RepoDashboardView: View {
     @Environment(\.modelContext) private var context
     @StateObject private var vm: RepooDashboardViewModel
-    
+
     @ObservedObject var searchVM: SearchViewModel
 
-    init(fullName: String, token: String, context: ModelContext) {
+    init(fullName: String, token: String, context: ModelContext, searchVM: SearchViewModel) {
         let service = GitHubService(token: token)
         _vm = StateObject(wrappedValue: RepooDashboardViewModel(
             fullName: fullName,
             context: context,
             service: service
         ))
-        
-        
+        self.searchVM = searchVM
+
+
         // Search
     }
 
@@ -30,6 +31,15 @@ struct RepoDashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             ScrollView {
                 if let r = vm.repo {
+                    let summary = RepoSummary(
+                        id: r.databaseId,
+                        fullName: r.fullName,
+                        description: r.rDescription,
+                        stargazersCount: r.stars,
+                        ownerLogin: r.owner,
+                        htmlURL: r.htmlURL,
+                        updatedAt: nil
+                    )
                     VStack {
                         // Header
                         HStack {
@@ -45,6 +55,10 @@ struct RepoDashboardView: View {
                                 }
                             }
                             Spacer()
+                            Button(action: { searchVM.toggleFavorite(summary) }) {
+                                Image(systemName: searchVM.isFavorite(summary) ? "heart.fill" : "heart")
+                                    .foregroundStyle(.black)
+                            }
                         }
                         // MARK: -Dashboard
                         VStack(spacing: 16) {
