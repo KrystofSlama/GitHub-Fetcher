@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SearchView: View {
-    
+    @Environment(\.colorScheme) private var colorScheme
     
     @Environment(\.modelContext) private var context
     
@@ -98,6 +98,7 @@ struct SearchView: View {
                             HStack {
                                 Text("Favorites")
                                     .font(.title3)
+                                    .fontWeight(.bold)
                                     .onAppear {
                                         print(vm.favorites)
                                     }

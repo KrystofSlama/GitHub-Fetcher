@@ -10,6 +10,7 @@ import SwiftData
 
 struct RepoDashboardView: View {
     @Environment(\.modelContext) private var context
+    @Environment(\.colorScheme) var colorScheme
     @StateObject private var vm: RepooDashboardViewModel
 
     @ObservedObject var searchVM: SearchViewModel
@@ -31,35 +32,23 @@ struct RepoDashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             ScrollView {
                 if let r = vm.repo {
-                    let summary = RepoSummary(
-                        id: r.databaseId,
-                        fullName: r.fullName,
-                        description: r.rDescription,
-                        stargazersCount: r.stars,
-                        ownerLogin: r.owner,
-                        htmlURL: r.htmlURL,
-                        updatedAt: nil
-                    )
-                    VStack {
+                    VStack(spacing: 0) {
                         // Header
                         HStack {
                             VStack(alignment: .leading, spacing: 0) {
                                 Text(r.name)
                                     .font(.largeTitle)
                                     .fontWeight(.heavy)
+                                    .padding(.vertical, -5)
                                 HStack(alignment: .bottom) {
                                     Text("By:")
                                     Text(r.owner)
                                         .font(.title3)
                                         .fontWeight(.semibold)
-                                }
+                                }.padding(.vertical, -5)
                             }
                             Spacer()
-                            Button(action: { searchVM.toggleFavorite(summary) }) {
-                                Image(systemName: searchVM.isFavorite(summary) ? "heart.fill" : "heart")
-                                    .foregroundStyle(.black)
-                            }
-                        }
+                        }.padding(.bottom, 16)
                         // MARK: -Dashboard
                         VStack(spacing: 16) {
                             // First Row
@@ -69,6 +58,8 @@ struct RepoDashboardView: View {
                                     Spacer()
                                     Image(systemName: "star.fill")
                                         .foregroundStyle(.yellow)
+                                        .fontWeight(.semibold)
+                                        .font(.title3)
                                     Text("\(r.stars)")
                                         .font(.largeTitle)
                                         .fontWeight(.medium)
@@ -125,15 +116,17 @@ struct RepoDashboardView: View {
                                     }
                                     Spacer()
                                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .background(.white)
+                                    .background(colorScheme == .dark ? .black : .white)
                                     .cornerRadius(8)
-                                    .shadow(radius: 3)
+                                    .shadow(color: colorScheme == .dark ? Color(.darkGray).opacity(0.2) : .gray.opacity(0.8), radius: 3)
                                 
                                 // Watchers
                                 HStack(spacing: 2) {
                                     Spacer()
                                     Image(systemName: "eye")
-                                        .foregroundStyle(.black)
+                                        .foregroundStyle(colorScheme == .dark ? .white : .black)
+                                        .fontWeight(.semibold)
+                                        .font(.title3)
                                     Text("\(r.watchers)")
                                         .font(.largeTitle)
                                         .fontWeight(.medium)
@@ -175,24 +168,24 @@ struct RepoDashboardView: View {
                                         }
                                     }
                                     if (vm.delta?.watchers ?? 0) > 0 {
-                                        Text("+\(vm.delta?.watchers ?? 0342)")
+                                        Text("+\(vm.delta?.watchers ?? 0)")
                                             .font(.footnote)
                                             .foregroundStyle(.green)
                                     } else if (vm.delta?.watchers ?? 0) < 0 {
-                                        Text("\(vm.delta?.watchers ?? 0234)")
+                                        Text("\(vm.delta?.watchers ?? 0)")
                                             .font(.footnote)
                                             .foregroundStyle(.red)
                                     } else {
-                                        Text("\(vm.delta?.watchers ?? 0123)")
+                                        Text("\(vm.delta?.watchers ?? 0)")
                                             .font(.footnote)
                                             .foregroundStyle(.black)
                                             .opacity(0.2)
                                     }
                                     Spacer()
                                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .background(.white)
+                                    .background(colorScheme == .dark ? .black : .white)
                                     .cornerRadius(8)
-                                    .shadow(radius: 3)
+                                    .shadow(color: colorScheme == .dark ? Color(.darkGray).opacity(0.2) : .gray.opacity(0.8), radius: 3)
                                 
                             }.frame(height: 80)
                             
@@ -202,7 +195,9 @@ struct RepoDashboardView: View {
                                 HStack(alignment: .center, spacing: 2) {
                                     Spacer()
                                     Image(systemName: "exclamationmark.circle")
-                                        .foregroundStyle(.black)
+                                        .foregroundStyle(colorScheme == .dark ? .white : .black)
+                                        .fontWeight(.semibold)
+                                        .font(.title3)
                                     Text("\(r.openIssues)")
                                         .font(.largeTitle)
                                         .fontWeight(.medium)
@@ -244,30 +239,32 @@ struct RepoDashboardView: View {
                                         }
                                     }
                                     if (vm.delta?.openIssues ?? 0) > 0 {
-                                        Text("+\(vm.delta?.openIssues ?? 0342)")
+                                        Text("+\(vm.delta?.openIssues ?? 0)")
                                             .font(.footnote)
                                             .foregroundStyle(.green)
                                     } else if (vm.delta?.openIssues ?? 0) < 0 {
-                                        Text("\(vm.delta?.openIssues ?? 0234)")
+                                        Text("\(vm.delta?.openIssues ?? 0)")
                                             .font(.footnote)
                                             .foregroundStyle(.red)
                                     } else {
-                                        Text("\(vm.delta?.openIssues ?? 0123)")
+                                        Text("\(vm.delta?.openIssues ?? 0)")
                                             .font(.footnote)
                                             .foregroundStyle(.black)
                                             .opacity(0.2)
                                     }
                                     Spacer()
                                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .background(.white)
+                                    .background(colorScheme == .dark ? .black : .white)
                                     .cornerRadius(8)
-                                    .shadow(radius: 3)
+                                    .shadow(color: colorScheme == .dark ? Color(.darkGray).opacity(0.2) : .gray.opacity(0.8), radius: 3)
                                 
                                 // Open PR
                                 HStack(spacing: 2) {
                                     Spacer()
                                     Image(systemName: "arrow.trianglehead.pull")
-                                        .foregroundStyle(.black)
+                                        .foregroundStyle(colorScheme == .dark ? .white : .black)
+                                        .fontWeight(.semibold)
+                                        .font(.title3)
                                     Text("\(r.openPRs)")
                                         .font(.largeTitle)
                                         .fontWeight(.medium)
@@ -324,36 +321,70 @@ struct RepoDashboardView: View {
                                     }
                                     Spacer()
                                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .background(.white)
+                                    .background(colorScheme == .dark ? .black : .white)
                                     .cornerRadius(8)
-                                    .shadow(radius: 3)
+                                    .shadow(color: colorScheme == .dark ? Color(.darkGray).opacity(0.2) : .gray.opacity(0.8), radius: 3)
                                 
                             }.frame(height: 80)
-                        }
+                        }.padding(.horizontal, 10)
                         // MARK: -Description
-                        Text("\(r.rDescription)")
+                        
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text("Description:")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .padding(.horizontal, 8)
+                                .padding(.top, 6)
+                            Text("\(r.rDescription)")
+                                .padding(.horizontal, 12)
+                                .padding(.bottom, 6)
+                        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(colorScheme == .dark ? .black : .white)
+                            .cornerRadius(8)
+                            .shadow(color: colorScheme == .dark ? .gray : .black.opacity(0.2), radius: colorScheme == .dark ? 0 : 3)
+                            .padding(.top, 16)
+                            
+                        
                         Spacer()
-                        // MARK: -Updated
-                        HStack {
-                            Text("Updated at: \(r.lastFetchedAt.formatted(date: .abbreviated, time: .shortened))")
-                                .foregroundStyle(.secondary)
-                                .font(.caption)
-                        }
-                    }
+                        // MARK: -
+                        
+                    }.padding(.horizontal, 8)
                 } else {
                     Text("Loading...")
                 }
             }
-            .refreshable { await vm.refresh() }
+            .refreshable { Task { await vm.refresh() } }
+            
+            Spacer()
+            // MARK: -Updated
+            if let r = vm.repo {
+                HStack {
+                    Spacer()
+                    Text("Updated at: \(r.lastFetchedAt.formatted(date: .abbreviated, time: .shortened))")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                    Spacer()
+                }
+            }
+            
         }
-        .padding()
+        .frame(minWidth: 0, maxWidth: .infinity)
+        .background(Color(.systemGray6))
         .task { await vm.load() }      // pull-to-refresh
         .toolbar {
-            Button {
-                
-            } label: {
-                if vm.isLoading {
-                    
+            if let r = vm.repo {
+                let summary = RepoSummary(
+                    id: r.databaseId,
+                    fullName: r.fullName,
+                    description: r.rDescription,
+                    stargazersCount: r.stars,
+                    ownerLogin: r.owner,
+                    htmlURL: r.htmlURL,
+                    updatedAt: nil
+                )
+                Button(action: { searchVM.toggleFavorite(summary) }) {
+                    Image(systemName: searchVM.isFavorite(summary) ? "heart.fill" : "heart")
+                        .foregroundStyle(searchVM.isFavorite(summary) ? .red : .black)
                 }
             }
         }
