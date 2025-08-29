@@ -61,6 +61,7 @@ struct SearchView: View {
                             }
                         }
                     } else {
+                        // Searched
                         VStack(spacing: 0) {
                             HStack {
                                 Text("Results")
@@ -91,6 +92,7 @@ struct SearchView: View {
                         }
                     }
                 } else {
+                    //Favorites
                     if !vm.favorites.isEmpty {
                         VStack(spacing: 0) {
                             HStack {
