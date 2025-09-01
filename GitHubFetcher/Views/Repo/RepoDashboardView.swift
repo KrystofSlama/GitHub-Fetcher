@@ -29,7 +29,7 @@ struct RepoDashboardView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack {
             ScrollView {
                 if let r = vm.repo {
                     VStack(spacing: 0) {
@@ -37,15 +37,20 @@ struct RepoDashboardView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 0) {
                                 Text(r.name)
-                                    .font(.largeTitle)
+                                    .font(.system(size: 50))
                                     .fontWeight(.heavy)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.5)
                                     .padding(.vertical, -5)
-                                HStack(alignment: .bottom) {
-                                    Text("By:")
-                                    Text(r.owner)
+                                
+                                HStack(alignment: .bottom, spacing: 0) {
+                                    Text("By:  ")
                                         .font(.title3)
+                                    Text(r.owner)
+                                        .font(.title)
                                         .fontWeight(.semibold)
-                                }.padding(.vertical, -5)
+                                        .padding(.bottom, -4)
+                                }
                             }
                             Spacer()
                         }.padding(.bottom, 16)
@@ -338,7 +343,7 @@ struct RepoDashboardView: View {
                             Text("\(r.rDescription)")
                                 .padding(.horizontal, 12)
                                 .padding(.bottom, 6)
-                        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                             .background(colorScheme == .dark ? .black : .white)
                             .cornerRadius(8)
                             .shadow(color: colorScheme == .dark ? .gray : .black.opacity(0.2), radius: colorScheme == .dark ? 0 : 3)
@@ -370,7 +375,7 @@ struct RepoDashboardView: View {
         }
         .frame(minWidth: 0, maxWidth: .infinity)
         .background(Color(.systemGray6))
-        .task { await vm.load() }      // pull-to-refresh
+        .task { await vm.load() }
         .toolbar {
             if let r = vm.repo {
                 let summary = RepoSummary(

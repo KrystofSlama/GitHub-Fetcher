@@ -136,6 +136,13 @@ struct SearchView: View {
                 Spacer()
             }
             .navigationTitle("Search Repos")
+            .toolbar {
+                ToolbarItem {
+                    NavigationLink(destination: SettingsView()) {
+                        Image(systemName: "gear")
+                    }
+                }
+            }
             .searchable(
                 text: $vm.query,
                 isPresented: $searchActive,
@@ -151,11 +158,6 @@ struct SearchView: View {
                 }
             }
             .background(Color(.systemGray6))
-            
-            
-            
-            
-            
         }
     }
 }
