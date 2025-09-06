@@ -37,7 +37,7 @@ struct RepoDashboardView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 0) {
                                 Text(r.name)
-                                    .font(.system(size: 50))
+                                    .font(.system(size: 40))
                                     .fontWeight(.heavy)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.5)

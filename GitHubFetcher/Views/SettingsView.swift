@@ -8,10 +8,30 @@
 import SwiftUI
 
 struct SettingsView: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+    @State private var token: String = KeychainHelper.getToken() ?? ""
+        @State private var saved = false
+        
+        var body: some View {
+            Form {
+                Section(header: Text("GitHub API Token")) {
+                    SecureField("Enter token", text: $token)
+                        .textInputAutocapitalization(.never)
+                        .disableAutocorrection(true)
+                    
+                    Button("Save") {
+                        KeychainHelper.saveToken(token)
+                        saved = true
+                    }
+                }
+                
+                if saved {
+                    Text("✅ Token saved!")
+                        .foregroundColor(.green)
+                }
+            }
+            .navigationTitle("API Settings")
+        }
     }
-}
 
 #Preview {
     SettingsView()
