@@ -15,8 +15,7 @@ struct RepoDashboardView: View {
 
     @ObservedObject var searchVM: SearchViewModel
 
-    init(fullName: String, token: String, context: ModelContext, searchVM: SearchViewModel) {
-        let service = GitHubService(token: token)
+    init(fullName: String, context: ModelContext, searchVM: SearchViewModel, service: GitHubService) {
         _vm = StateObject(wrappedValue: RepooDashboardViewModel(
             fullName: fullName,
             context: context,
