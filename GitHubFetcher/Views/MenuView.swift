@@ -13,5 +13,4 @@ struct MenuView: View {
     var body: some View {
         
     }
-    
 }

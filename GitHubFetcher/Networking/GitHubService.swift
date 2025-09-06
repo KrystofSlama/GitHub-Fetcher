@@ -103,6 +103,7 @@ final class GitHubService {
         }
     }
     
+    // Refractor this
     // MARK: -Fetching repo data
     func fetchRepoDetailGraphQL(fullName: String) async throws -> RepoDetail {
         guard let token, !token.isEmpty else { throw GitHubAPIError.unauthorized }
