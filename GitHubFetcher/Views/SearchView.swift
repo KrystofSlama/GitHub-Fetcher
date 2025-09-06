@@ -2,14 +2,15 @@ import SwiftUI
 
 struct SearchView: View {
     @Environment(\.colorScheme) private var colorScheme
-    
+
     @Environment(\.modelContext) private var context
-    
-    
-    
-    
+
     @StateObject var vm: SearchViewModel
-    init(vm: SearchViewModel) { _vm = StateObject(wrappedValue: vm) }
+    let service: GitHubService
+    init(vm: SearchViewModel, service: GitHubService) {
+        _vm = StateObject(wrappedValue: vm)
+        self.service = service
+    }
     
     @State private var clearSearch: Bool = true
     @State private var searchActive: Bool = false
@@ -107,8 +108,7 @@ struct SearchView: View {
                             ScrollView {
                                 ForEach(vm.favorites) { repo in
                                     NavigationLink {
-                                        //RepoDashboardView(repo: repo, token: "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")   // ✅ keep this simple
-                                        RepoDashboardView(fullName: repo.fullName, token: "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", context: context, searchVM: vm)
+                                        RepoDashboardView(fullName: repo.fullName, context: context, searchVM: vm, service: service)
                                     } label: {
                                         RepoRow(
                                             repo: repo,
@@ -138,7 +138,7 @@ struct SearchView: View {
             .navigationTitle("Search Repos")
             .toolbar {
                 ToolbarItem {
-                    NavigationLink(destination: SettingsView()) {
+                    NavigationLink(destination: SettingsView(service: service)) {
                         Image(systemName: "gear")
                     }
                 }

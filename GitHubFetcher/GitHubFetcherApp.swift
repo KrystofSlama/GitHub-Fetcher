@@ -13,7 +13,7 @@ struct GitHubFetcherApp: App {
 
     var body: some Scene {
         WindowGroup {
-            SearchView(vm: SearchViewModel(api: container.github, store: container.favorites))
+            SearchView(vm: SearchViewModel(api: container.github, store: container.favorites), service: container.github)
         }
         .modelContainer(container.modelContainer)   // ← inject once, globally
     }
