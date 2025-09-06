@@ -10,20 +10,21 @@ import Combine
 
 @MainActor
 final class SearchViewModel: ObservableObject {
+    //
+    private let api: GitHubService
+    private let store: FavoritesStore
+    // Search for repos
     @Published var query = ""
+    // Showed repos
     @Published var results: [RepoSummary] = []
-
-    // Keep array for persistence/order, but track identity via ids
     @Published private(set) var favorites: [RepoSummary] = []
-    private var favoriteIds = Set<Int>()
-
     @Published var recentOpened: [RepoSummary] = []
+    // Others
     @Published var isLoading = false
     @Published var errorText: String?
     @Published var quickOpenCandidate: (owner: String, name: String)?
-
-    private let api: GitHubService
-    private let store: FavoritesStore
+    
+    private var favoriteIds = Set<Int>()
 
     init(api: GitHubService, store: FavoritesStore) {
         self.api = api
@@ -35,35 +36,37 @@ final class SearchViewModel: ObservableObject {
 
         self.recentOpened = store.loadRecentOpened()
     }
-
     
-
-    // MARK: - Search
+    // MARK: -Search
     func searchNow() async {
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !q.isEmpty else { results = []; errorText = nil; return }
+        
         errorText = nil
         isLoading = true
+        
         defer { isLoading = false }
+        // Search and returning [RepoSummary]
         do {
             let fetched = try await api.searchRepos(query: q)
+            // Results loaded from api.call
             results = fetched
             absorb(fetched)
         } catch GitHubAPIError.rateLimited {
-            results = []; errorText = "Rate limit reached. Try again soon or add a token."
+            errorText = "Rate limit reached. Try again soon or add a token."
         } catch {
-            results = []; errorText = "Search failed. Check your connection."
+            errorText = "Search failed. Check your connection."
         }
     }
 
-    // MARK: - Open History
+    // MARK: -Open History
     func markOpened(_ repo: RepoSummary) {
         recentOpened.removeAll { $0.id == repo.id }
         recentOpened.insert(repo, at: 0)
         store.saveRecentOpened(recentOpened)
     }
 
-    // MARK: - Favorites (id-based)
+    // MARK: -Favorites (id-based)
     func isFavorite(_ repo: RepoSummary) -> Bool {
         favoriteIds.contains(repo.id)
     }

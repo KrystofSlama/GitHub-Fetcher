@@ -5,91 +5,159 @@
 //  Created by Kryštof Sláma on 23.08.2025.
 //
 
+
 import Foundation
 import SwiftData
 
-@MainActor
-final class DashboardViewModel: ObservableObject {
-    @Published var detail: RepoBasicsDetail?
-    @Published var isLoading = false
-    @Published var errorText: String?
-
-    private let api: GitHubService
-    private let owner: String
-    private let name: String
-    
-    
-    @Published var repoDetail: RepoDetail?
-
-    init(owner: String, name: String, api: GitHubService) {
-        self.owner = owner
-        self.name = name
-        self.api = api
-    }
-
-    func load() async {
-        isLoading = true
-        errorText = nil
-        defer { isLoading = false }
-        do {
-            detail = try await api.getRepoBasicsGraphQL(owner: owner, name: name)
-        } catch {
-            errorText = (error as NSError).localizedDescription
-        }
-    }
-    
-    func loadNew(repoName: String) async {
-        isLoading = true
-        errorText = nil
-        defer { isLoading = false }
-        do {
-            repoDetail = try await api.getDashboardData(repoName: repoName)
-        } catch {
-            errorText = (error as NSError).localizedDescription
-        }
-    }
+// Use the exact function you added to GitHubService
+protocol GitHubGraphQLServicing {
+    func fetchRepoDetailGraphQL(fullName: String) async throws -> RepoDetail
 }
 
 @MainActor
-func createRepoBaselineIfNeeded(
-    fullName: String,                    // "owner/name"
-    token: String,
-    context: ModelContext,
-    fetch: (String, String) async throws -> RepoDetail // (fullName, token) -> RepoDetail
-) async throws -> TrackedRepo {
-    guard !token.isEmpty else { throw GitHubAPIError.unauthorized }
+final class RepooDashboardViewModel: ObservableObject {
+    // UI state
+    @Published var repo: TrackedRepo?
+    @Published var delta: RepoDelta?
+    @Published var isOffline = false
+    @Published var isLoading = false
+    @Published var errorText: String?
 
-    // 1) If it already exists, return it untouched.
-    if let repo = try context.fetch(
-        FetchDescriptor<TrackedRepo>(predicate: #Predicate { $0.fullName == fullName })
-    ).first {
-        return repo
+    // Inputs
+    private let fullName: String            // "owner/name" for GraphQL
+    private let context: ModelContext
+    private let service: GitHubGraphQLServicing
+    private let hintedDatabaseId: Int?
+
+    init(
+        fullName: String,
+        context: ModelContext,
+        service: GitHubGraphQLServicing,
+        hintedDatabaseId: Int? = nil
+    ) {
+        self.fullName = fullName
+        self.context = context
+        self.service = service
+        self.hintedDatabaseId = hintedDatabaseId
     }
 
+    // MARK: - Public API
 
-    // 2) Fetch from GitHub
-    let detail: RepoDetail
-    do {
-        detail = try await fetch(fullName, token)
-    } catch {
-        throw GitHubAPIError.transport(error)
+    /// Call in `.task` on view appear, and from `.refreshable`.
+    func load() async {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            // 1) API first
+            let detail = try await service.fetchRepoDetailGraphQL(fullName: fullName)
+            try applyNetworkDetail(detail)
+            isOffline = false
+            errorText = nil
+        } catch {
+            // 2) Fallback to SwiftData cache
+            await fallbackToSwiftData(error: error)
+        }
     }
 
-    // 3) Insert baseline
-    let now = Date()
-    let repo = TrackedRepo(
-        databaseId: detail.id,
-        fullName: detail.fullName,
-        rDescription: detail.rDescription,
-        htmlURL: detail.htmlURL,
-        stars: detail.starsCount,
-        openIssues: detail.openIssuesCount,
-        openPRs: detail.openPRsCount,
-        forks: detail.forksCount,
-        watchers: detail.watchersCount,
-        lastFetchedAt: now
-    )
-    context.insert(repo)
-    try context.save()
-    return repo
+    func refresh() async { await load() }
+
+    // MARK: - Internals
+
+    /// Applies fresh GraphQL data:
+    /// - finds existing SD row (by id, then by fullName),
+    /// - computes delta if row existed,
+    /// - overwrites baseline,
+    /// - publishes UI state.
+    private func applyNetworkDetail(_ d: RepoDetail) throws {
+        // Prefer stable databaseId; fallback to fullName for older rows / first seed
+        let existing = try fetchByDatabaseId(d.id) ?? fetchByFullNameNoThrow(d.fullName)
+
+        let now = Date()
+        let repoToUse: TrackedRepo
+        let computedDelta: RepoDelta?
+
+        if let r = existing {
+            // Compute "since last refresh" delta
+            computedDelta = RepoDelta(
+                stars: d.starsCount - r.stars,
+                openIssues: d.openIssuesCount - r.openIssues,
+                openPRs: d.openPRsCount - r.openPRs,
+                forks: d.forksCount - r.forks,
+                watchers: d.watchersCount - r.watchers,
+                since: r.lastFetchedAt
+            )
+
+            // Overwrite baseline (and reconcile rename via fullName)
+            r.fullName = d.fullName
+            r.htmlURL = d.htmlURL
+            r.stars = d.starsCount
+            r.openIssues = d.openIssuesCount
+            r.openPRs = d.openPRsCount
+            r.forks = d.forksCount
+            r.watchers = d.watchersCount
+            r.lastFetchedAt = now
+
+            try context.save()
+            repoToUse = r
+        } else {
+            // First time seen locally → insert baseline; no delta yet
+            let r = TrackedRepo(
+                databaseId: d.id,
+                fullName: d.fullName,
+                rDescription: d.rDescription,
+                htmlURL: d.htmlURL,
+                stars: d.starsCount,
+                openIssues: d.openIssuesCount,
+                openPRs: d.openPRsCount,
+                forks: d.forksCount,
+                watchers: d.watchersCount,
+                lastFetchedAt: now
+            )
+            context.insert(r)
+            try context.save()
+            repoToUse = r
+            computedDelta = nil
+        }
+
+        // Publish
+        self.repo = repoToUse
+        self.delta = computedDelta
+    }
+
+    /// API failed → try cached SD; set offline state.
+    private func fallbackToSwiftData(error: Error) async {
+        let cached: TrackedRepo?
+        if let hinted = hintedDatabaseId, let byId = try? fetchByDatabaseId(hinted) {
+            cached = byId
+        } else {
+            cached = fetchByFullNameNoThrow(fullName)
+        }
+
+        if let cached {
+            self.repo = cached
+            self.delta = nil
+            self.isOffline = true
+            self.errorText = "Offline/API error – showing last saved data."
+        } else {
+            self.repo = nil
+            self.delta = nil
+            self.isOffline = true
+            self.errorText = "Couldn’t load data (no internet & no cached baseline)."
+        }
+    }
+
+    // MARK: - SwiftData helpers
+
+    private func fetchByDatabaseId(_ id: Int) throws -> TrackedRepo? {
+        try context.fetch(
+            FetchDescriptor<TrackedRepo>(predicate: #Predicate { $0.databaseId == id })
+        ).first
+    }
+
+    private func fetchByFullNameNoThrow(_ name: String) -> TrackedRepo? {
+        (try? context.fetch(
+            FetchDescriptor<TrackedRepo>(predicate: #Predicate { $0.fullName == name })
+        ).first)
+    }
 }

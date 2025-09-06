@@ -23,9 +23,6 @@ struct RepoDashboardView: View {
             service: service
         ))
         self.searchVM = searchVM
-
-
-        // Search
     }
 
     var body: some View {
