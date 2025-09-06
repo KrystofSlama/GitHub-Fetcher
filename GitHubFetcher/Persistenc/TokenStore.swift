@@ -1,5 +1,5 @@
 //
-//  KeychainHelper.swift
+//  TokenStore.swift
 //  GitHubFetcher
 //
 //  Created by Kryštof Sláma on 06.09.2025.
