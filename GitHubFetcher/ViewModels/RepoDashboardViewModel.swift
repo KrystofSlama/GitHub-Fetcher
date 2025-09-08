@@ -19,6 +19,8 @@ final class RepooDashboardViewModel: ObservableObject {
     // UI state
     @Published var repo: TrackedRepo?
     @Published var delta: RepoDelta?
+    @Published var issues: [RepoIssue] = []
+    @Published var commits: [RepoCommit] = []
     @Published var isOffline = false
     @Published var isLoading = false
     @Published var errorText: String?
@@ -123,6 +125,8 @@ final class RepooDashboardViewModel: ObservableObject {
         // Publish
         self.repo = repoToUse
         self.delta = computedDelta
+        self.issues = d.issues
+        self.commits = d.commits
     }
 
     /// API failed → try cached SD; set offline state.
@@ -137,11 +141,15 @@ final class RepooDashboardViewModel: ObservableObject {
         if let cached {
             self.repo = cached
             self.delta = nil
+            self.issues = []
+            self.commits = []
             self.isOffline = true
             self.errorText = "Offline/API error – showing last saved data."
         } else {
             self.repo = nil
             self.delta = nil
+            self.issues = []
+            self.commits = []
             self.isOffline = true
             self.errorText = "Couldn’t load data (no internet & no cached baseline)."
         }
