@@ -8,6 +8,18 @@
 import SwiftData
 import Foundation
 
+struct RepoIssue: Decodable, Identifiable, Hashable {
+    let id: Int
+    let title: String
+    let url: URL
+}
+
+struct RepoCommit: Decodable, Identifiable, Hashable {
+    let id: String        // commit SHA
+    let message: String
+    let url: URL
+}
+
 struct RepoDetail: Decodable, Hashable {
     let id: Int                 // == databaseId
     let fullName: String        // "owner/name"
@@ -18,6 +30,8 @@ struct RepoDetail: Decodable, Hashable {
     let openIssuesCount: Int
     let openPRsCount: Int       // 0 if you’re on REST; real count if GraphQL
     let watchersCount: Int      // subscribers
+    let issues: [RepoIssue]
+    let commits: [RepoCommit]
 }
 
 // Computed at refresh time and shown in UI; never stored.

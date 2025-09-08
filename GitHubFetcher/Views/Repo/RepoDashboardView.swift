@@ -344,11 +344,46 @@ struct RepoDashboardView: View {
                             .cornerRadius(8)
                             .shadow(color: colorScheme == .dark ? .gray : .black.opacity(0.2), radius: colorScheme == .dark ? 0 : 3)
                             .padding(.top, 16)
-                            
-                        
+
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text("Open Issues:")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .padding(.horizontal, 8)
+                                .padding(.top, 6)
+                            ForEach(vm.issues) { issue in
+                                Link(issue.title, destination: issue.url)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 2)
+                            }
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                            .background(colorScheme == .dark ? .black : .white)
+                            .cornerRadius(8)
+                            .shadow(color: colorScheme == .dark ? .gray : .black.opacity(0.2), radius: colorScheme == .dark ? 0 : 3)
+                            .padding(.top, 16)
+
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text("Recent Commits:")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .padding(.horizontal, 8)
+                                .padding(.top, 6)
+                            ForEach(vm.commits) { commit in
+                                Link(commit.message, destination: commit.url)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 2)
+                            }
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                            .background(colorScheme == .dark ? .black : .white)
+                            .cornerRadius(8)
+                            .shadow(color: colorScheme == .dark ? .gray : .black.opacity(0.2), radius: colorScheme == .dark ? 0 : 3)
+                            .padding(.top, 16)
+
                         Spacer()
                         // MARK: -
-                        
+
                     }.padding(.horizontal, 8)
                 } else {
                     Text("Loading...")

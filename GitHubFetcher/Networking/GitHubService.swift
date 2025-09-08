@@ -124,9 +124,29 @@ final class GitHubService {
             updatedAt
             stargazerCount
             forkCount
-            issues(states: OPEN) { totalCount }
+            issues(states: OPEN, first: 10, orderBy: {field: UPDATED_AT, direction: DESC}) {
+              totalCount
+              nodes {
+                databaseId
+                title
+                url
+              }
+            }
             pullRequests(states: OPEN) { totalCount }
             watchers { totalCount }
+            defaultBranchRef {
+              target {
+                ... on Commit {
+                  history(first: 10) {
+                    nodes {
+                      oid
+                      messageHeadline
+                      url
+                    }
+                  }
+                }
+              }
+            }
           }
         }
         """
@@ -170,10 +190,34 @@ final class GitHubService {
                     let updatedAt: Date
                     let stargazerCount: Int
                     let forkCount: Int
+                    struct IssueNode: Decodable {
+                        let databaseId: Int
+                        let title: String
+                        let url: URL
+                    }
+                    struct Issues: Decodable {
+                        let totalCount: Int
+                        let nodes: [IssueNode]
+                    }
+                    let issues: Issues
                     struct Count: Decodable { let totalCount: Int }
-                    let issues: Count
                     let pullRequests: Count
                     let watchers: Count
+                    struct DefaultBranchRef: Decodable {
+                        struct Target: Decodable {
+                            struct History: Decodable {
+                                struct CommitNode: Decodable {
+                                    let oid: String
+                                    let messageHeadline: String
+                                    let url: URL
+                                }
+                                let nodes: [CommitNode]
+                            }
+                            let history: History?
+                        }
+                        let target: Target?
+                    }
+                    let defaultBranchRef: DefaultBranchRef?
                 }
                 let repository: Repo?
             }
@@ -196,6 +240,11 @@ final class GitHubService {
             throw GitHubAPIError.notFound
         }
 
+        let issues = r.issues.nodes.map { RepoIssue(id: $0.databaseId, title: $0.title, url: $0.url) }
+        let commits = r.defaultBranchRef?.target?.history?.nodes.map {
+            RepoCommit(id: $0.oid, message: $0.messageHeadline, url: $0.url)
+        } ?? []
+
         return RepoDetail(
             id: r.databaseId,
             fullName: r.nameWithOwner,
@@ -205,7 +254,9 @@ final class GitHubService {
             forksCount: r.forkCount,
             openIssuesCount: r.issues.totalCount,
             openPRsCount: r.pullRequests.totalCount,
-            watchersCount: r.watchers.totalCount
+            watchersCount: r.watchers.totalCount,
+            issues: issues,
+            commits: commits
         )
     }
 }
