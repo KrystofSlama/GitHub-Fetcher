@@ -124,7 +124,8 @@ final class GitHubService {
             updatedAt
             stargazerCount
             forkCount
-            issues(states: OPEN, first: 10, orderBy: {field: UPDATED_AT, direction: DESC}) {
+        
+            issues(states: OPEN, first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {
               totalCount
               nodes {
                 databaseId
@@ -132,6 +133,7 @@ final class GitHubService {
                 url
               }
             }
+        
             pullRequests(states: OPEN) { totalCount }
             watchers { totalCount }
             defaultBranchRef {
@@ -244,7 +246,7 @@ final class GitHubService {
         let commits = r.defaultBranchRef?.target?.history?.nodes.map {
             RepoCommit(id: $0.oid, message: $0.messageHeadline, url: $0.url)
         } ?? []
-
+        
         return RepoDetail(
             id: r.databaseId,
             fullName: r.nameWithOwner,

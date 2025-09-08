@@ -14,6 +14,9 @@ struct RepoDashboardView: View {
     @StateObject private var vm: RepooDashboardViewModel
 
     @ObservedObject var searchVM: SearchViewModel
+    
+    // Expandable lists
+    @State private var isExpandedIssues: Bool = false
 
     init(fullName: String, context: ModelContext, searchVM: SearchViewModel, service: GitHubService) {
         _vm = StateObject(wrappedValue: RepooDashboardViewModel(
@@ -328,8 +331,8 @@ struct RepoDashboardView: View {
                                 
                             }.frame(height: 80)
                         }.padding(.horizontal, 10)
-                        // MARK: -Description
                         
+                        // MARK: -Description
                         VStack(alignment: .leading, spacing: 0) {
                             Text("Description:")
                                 .font(.title3)
@@ -345,23 +348,58 @@ struct RepoDashboardView: View {
                             .shadow(color: colorScheme == .dark ? .gray : .black.opacity(0.2), radius: colorScheme == .dark ? 0 : 3)
                             .padding(.top, 16)
 
+                        // MARK: -Issues, Commits
+                        
+                        
+                        
+                        
                         VStack(alignment: .leading, spacing: 0) {
-                            Text("Open Issues:")
-                                .font(.title3)
-                                .fontWeight(.bold)
-                                .padding(.horizontal, 8)
-                                .padding(.top, 6)
-                            ForEach(vm.issues) { issue in
-                                Link(issue.title, destination: issue.url)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 2)
+                            
+                                Button {
+                                    isExpandedIssues.toggle()
+                                } label : {
+                                    HStack(alignment: .center) {
+                                        Text("Open Issues:")
+                                            .font(.title3)
+                                            .fontWeight(.bold)
+                                            .foregroundStyle(colorScheme == .light ? .black : .white)
+                                        Spacer()
+                                        Image(systemName: isExpandedIssues ? "chevron.up" : "chevron.down")
+                                            .fontWeight(.bold)
+                                            .foregroundStyle(colorScheme == .light ? .black : .white)
+                                    }
+                                }.padding(.horizontal, 8)
+                                .padding(.vertical, 6)
+                            
+                            if isExpandedIssues {
+                                VStack(spacing: 0) {
+                                    ForEach(vm.issues) { issue in
+                                        HStack(alignment: .center, spacing: 6) {
+                                            Image(systemName: "circle.fill")
+                                                .resizable()
+                                                .frame(width: 8, height: 8)
+                                            
+                                            Link(issue.title, destination: issue.url)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .lineLimit(1)
+                                        }.padding(.horizontal, 8)
+                                    }
+                                }.padding(.bottom, 8)
                             }
+                            
                         }.frame(maxWidth: .infinity, alignment: .leading)
                             .background(colorScheme == .dark ? .black : .white)
                             .cornerRadius(8)
                             .shadow(color: colorScheme == .dark ? .gray : .black.opacity(0.2), radius: colorScheme == .dark ? 0 : 3)
                             .padding(.top, 16)
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+    
 
                         VStack(alignment: .leading, spacing: 0) {
                             Text("Recent Commits:")
