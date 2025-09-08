@@ -25,10 +25,10 @@ final class GitHubService {
     private let session: URLSession
     private let base = URL(string: "https://api.github.com")!
     private let graphql = URL(string: "https://api.github.com/graphql")!
+    
+    // Token
     private let tokenStore: TokenStore
-
     var token: String? { tokenStore.getToken() }
-
     init(tokenStore: TokenStore = KeychainHelper.shared, session: URLSession = .shared) {
         self.tokenStore = tokenStore
         self.session = session

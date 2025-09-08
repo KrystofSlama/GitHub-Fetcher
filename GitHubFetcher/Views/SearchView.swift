@@ -140,7 +140,7 @@ struct SearchView: View {
                 ToolbarItem {
                     NavigationLink(destination: SettingsView(service: service)) {
                         Image(systemName: "gear")
-                    }
+                    }.foregroundStyle(.black)
                 }
             }
             .searchable(
