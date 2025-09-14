@@ -354,20 +354,23 @@ struct RepoDashboardView: View {
                         
                         
                         VStack(alignment: .leading, spacing: 0) {
-                            
+                            HStack(alignment: .center) {
+                                Text("Open Issues:")
+                                    .font(.title3)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(colorScheme == .light ? .black : .white)
+                                
                                 Button {
                                     isExpandedIssues.toggle()
                                 } label : {
-                                    HStack(alignment: .center) {
-                                        Text("Open Issues:")
-                                            .font(.title3)
-                                            .fontWeight(.bold)
-                                            .foregroundStyle(colorScheme == .light ? .black : .white)
+                                    HStack{
                                         Spacer()
                                         Image(systemName: isExpandedIssues ? "chevron.up" : "chevron.down")
                                             .fontWeight(.bold)
+                                            .contentTransition(.symbolEffect(.replace.magic(fallback: .downUp.byLayer), options: .nonRepeating))
                                             .foregroundStyle(colorScheme == .light ? .black : .white)
                                     }
+                                }
                                 }.padding(.horizontal, 8)
                                 .padding(.vertical, 6)
                             
