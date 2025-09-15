@@ -10,6 +10,7 @@ import Foundation
 
 struct RepoIssue: Decodable, Identifiable, Hashable {
     let id: Int
+    let number: Int
     let title: String
     let url: URL
 }

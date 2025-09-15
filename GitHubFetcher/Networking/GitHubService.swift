@@ -129,6 +129,7 @@ final class GitHubService {
               totalCount
               nodes {
                 databaseId
+                number
                 title
                 url
               }
@@ -194,6 +195,7 @@ final class GitHubService {
                     let forkCount: Int
                     struct IssueNode: Decodable {
                         let databaseId: Int
+                        let number: Int
                         let title: String
                         let url: URL
                     }
@@ -242,7 +244,7 @@ final class GitHubService {
             throw GitHubAPIError.notFound
         }
 
-        let issues = r.issues.nodes.map { RepoIssue(id: $0.databaseId, title: $0.title, url: $0.url) }
+        let issues = r.issues.nodes.map { RepoIssue(id: $0.databaseId, number: $0.number, title: $0.title, url: $0.url) }
         let commits = r.defaultBranchRef?.target?.history?.nodes.map {
             RepoCommit(id: $0.oid, message: $0.messageHeadline, url: $0.url)
         } ?? []

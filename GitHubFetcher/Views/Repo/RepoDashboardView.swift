@@ -380,11 +380,17 @@ struct RepoDashboardView: View {
                                         HStack(alignment: .center, spacing: 6) {
                                             Image(systemName: "circle.fill")
                                                 .resizable()
-                                                .frame(width: 8, height: 8)
-                                            
-                                            Link(issue.title, destination: issue.url)
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                .lineLimit(1)
+                                                .frame(width: 10, height: 10)
+                                            VStack(alignment: .leading) {
+                                                Link(issue.title, destination: issue.url)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .lineLimit(1)
+                                                
+                                                Text("#\(String(issue.number))")
+                                            }
+                                            Image(systemName: "chevron.right")
+                                                .fontWeight(.bold)
+                                                .font(.title2)
                                         }.padding(.horizontal, 8)
                                     }
                                 }.padding(.bottom, 8)
