@@ -375,23 +375,28 @@ struct RepoDashboardView: View {
                                 .padding(.vertical, 6)
                             
                             if isExpandedIssues {
-                                VStack(spacing: 0) {
+                                VStack(spacing: 8) {
                                     ForEach(vm.issues) { issue in
-                                        HStack(alignment: .center, spacing: 6) {
-                                            Image(systemName: "circle.fill")
-                                                .resizable()
-                                                .frame(width: 10, height: 10)
-                                            VStack(alignment: .leading) {
-                                                Link(issue.title, destination: issue.url)
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .lineLimit(1)
+                                        NavigationLink {
+                                            RepoIssueView(repoName: r.fullName, issueNumber: issue.number)
+                                        } label: {
+                                            HStack(alignment: .center, spacing: 6) {
+                                                Image(systemName: "circle.fill")
+                                                    .resizable()
+                                                    .frame(width: 7, height: 7)
+                                                    .foregroundStyle(colorScheme == . light ? .black : .white)
                                                 
+                                                Text(issue.title)
+                                                    .lineLimit(1)
+                                                    .fontWeight(.semibold)
+                                                    .foregroundStyle(colorScheme == . light ? .black : .white)
+                                                
+                                                Spacer()
                                                 Text("#\(String(issue.number))")
-                                            }
-                                            Image(systemName: "chevron.right")
-                                                .fontWeight(.bold)
-                                                .font(.title2)
-                                        }.padding(.horizontal, 8)
+                                                    .font(.callout)
+                                                    .foregroundStyle(.gray)
+                                            }.padding(.horizontal, 8)
+                                        }
                                     }
                                 }.padding(.bottom, 8)
                             }

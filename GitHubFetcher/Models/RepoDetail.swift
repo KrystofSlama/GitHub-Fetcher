@@ -8,19 +8,8 @@
 import SwiftData
 import Foundation
 
-struct RepoIssue: Decodable, Identifiable, Hashable {
-    let id: Int
-    let number: Int
-    let title: String
-    let url: URL
-}
 
-struct RepoCommit: Decodable, Identifiable, Hashable {
-    let id: String        // commit SHA
-    let message: String
-    let url: URL
-}
-
+// MARK: -RepoDetail for dashboard
 struct RepoDetail: Decodable, Hashable {
     let id: Int                 // == databaseId
     let fullName: String        // "owner/name"
@@ -35,25 +24,50 @@ struct RepoDetail: Decodable, Hashable {
     let commits: [RepoCommit]
 }
 
-// Computed at refresh time and shown in UI; never stored.
+//Deltas for dashboard
 struct RepoDelta: Hashable {
     let stars: Int?
     let openIssues: Int
     let openPRs: Int
     let forks: Int
     let watchers: Int
-    let since: Date             // baseline time (repo.lastFetchedAt)
+    let since: Date
 }
 
-// For searchView
-struct RepoBasicsDetail: Identifiable, Codable, Hashable {
-    let summary: RepoSummary
-    let openIssuesCount: Int   // NOTE: REST 'open_issues_count' includes PRs unless you query issues-only.
 
-    // Identifiable passthrough
-    var id: Int { summary.id }
+//MARK: -Issues
+struct RepoIssue: Decodable, Identifiable, Hashable {
+    let id: Int
+    let number: Int
+    let title: String
+    let url: URL
+}
 
-    // Convenience for the UI
-    var name: String { summary.fullName }
-    var stars: Int { summary.stargazersCount }
+struct GHIssue: Identifiable, Hashable {
+    let id: String
+    let number: Int
+    let title: String
+    let state: String
+    let author: String?
+    let createdAt: Date
+    let commentsCount: Int
+    let labels: [GHLabel]
+    let url: URL
+}
+
+
+//MARK: -Commits
+struct RepoCommit: Decodable, Identifiable, Hashable {
+    let id: String        // commit SHA
+    let message: String
+    let url: URL
+}
+
+
+//MARK: -Others
+//Labels
+struct GHLabel: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let color: String
 }
