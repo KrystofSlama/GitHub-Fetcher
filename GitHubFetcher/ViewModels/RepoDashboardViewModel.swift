@@ -137,6 +137,11 @@ final class RepooDashboardViewModel: ObservableObject {
             cached = fetchByFullNameNoThrow(fullName)
         }
 
+        if let apiError = error as? GitHubAPIError, case .unauthorized = apiError {
+            applyUnauthorizedFallback(using: cached)
+            return
+        }
+
         if let cached {
             self.repo = cached
             self.delta = nil
@@ -154,6 +159,24 @@ final class RepooDashboardViewModel: ObservableObject {
         }
     }
 
+    private func applyUnauthorizedFallback(using cached: TrackedRepo?) {
+        if let cached {
+            repo = cached
+            delta = nil
+            issues = []
+            commits = []
+            isOffline = false
+            errorText = "Missing or invalid GitHub token. Update it in Settings to refresh."
+        } else {
+            repo = nil
+            delta = nil
+            issues = []
+            commits = []
+            isOffline = false
+            errorText = "Missing or invalid GitHub token. Add one in Settings to load repository details."
+        }
+    }
+
     // MARK: - SwiftData helpers
 
     private func fetchByDatabaseId(_ id: Int) throws -> TrackedRepo? {
@@ -168,3 +191,4 @@ final class RepooDashboardViewModel: ObservableObject {
         ).first)
     }
 }
+

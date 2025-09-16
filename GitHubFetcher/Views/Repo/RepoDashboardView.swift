@@ -30,6 +30,8 @@ struct RepoDashboardView: View {
     var body: some View {
         VStack {
             ScrollView {
+                
+
                 if let r = vm.repo {
                     VStack(spacing: 0) {
                         // Header
@@ -436,25 +438,40 @@ struct RepoDashboardView: View {
                         Spacer()
                         // MARK: -
 
+                        HStack {
+                            Spacer()
+                            Text("Updated at: \(r.lastFetchedAt.formatted(date: .abbreviated, time: .shortened))")
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                            Spacer()
+                        }
                     }.padding(.horizontal, 8)
-                } else {
-                    Text("Loading...")
+                } else if vm.isLoading {
+                    ProgressView("Loading…")
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 32)
                 }
             }
             .refreshable { Task { await vm.refresh() } }
             
-            Spacer()
-            // MARK: -Updated
-            if let r = vm.repo {
-                HStack {
+            if let message = vm.errorText {
+                VStack {
                     Spacer()
-                    Text("Updated at: \(r.lastFetchedAt.formatted(date: .abbreviated, time: .shortened))")
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-                    Spacer()
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                        Text(message)
+                            .font(.callout)
+                    }
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(Color.red.opacity(colorScheme == .dark ? 0.15 : 0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, 12)
                 }
             }
-            
         }
         .frame(minWidth: 0, maxWidth: .infinity)
         .background(Color(.systemGray6))
