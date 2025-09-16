@@ -137,6 +137,11 @@ final class RepooDashboardViewModel: ObservableObject {
             cached = fetchByFullNameNoThrow(fullName)
         }
 
+        if let apiError = error as? GitHubAPIError, apiError == .unauthorized {
+            applyUnauthorizedFallback(using: cached)
+            return
+        }
+
         if let cached {
             self.repo = cached
             self.delta = nil
@@ -151,6 +156,24 @@ final class RepooDashboardViewModel: ObservableObject {
             self.commits = []
             self.isOffline = true
             self.errorText = "Couldn’t load data (no internet & no cached baseline)."
+        }
+    }
+
+    private func applyUnauthorizedFallback(using cached: TrackedRepo?) {
+        if let cached {
+            repo = cached
+            delta = nil
+            issues = []
+            commits = []
+            isOffline = false
+            errorText = "Missing or invalid GitHub token. Update it in Settings to refresh."
+        } else {
+            repo = nil
+            delta = nil
+            issues = []
+            commits = []
+            isOffline = false
+            errorText = "Missing or invalid GitHub token. Add one in Settings to load repository details."
         }
     }
 

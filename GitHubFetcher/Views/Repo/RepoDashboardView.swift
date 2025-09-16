@@ -30,6 +30,22 @@ struct RepoDashboardView: View {
     var body: some View {
         VStack {
             ScrollView {
+                if let message = vm.errorText {
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                        Text(message)
+                            .font(.callout)
+                    }
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(Color.red.opacity(colorScheme == .dark ? 0.15 : 0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, 12)
+                }
+
                 if let r = vm.repo {
                     VStack(spacing: 0) {
                         // Header
@@ -437,8 +453,10 @@ struct RepoDashboardView: View {
                         // MARK: -
 
                     }.padding(.horizontal, 8)
-                } else {
-                    Text("Loading...")
+                } else if vm.isLoading {
+                    ProgressView("Loading…")
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 32)
                 }
             }
             .refreshable { Task { await vm.refresh() } }
