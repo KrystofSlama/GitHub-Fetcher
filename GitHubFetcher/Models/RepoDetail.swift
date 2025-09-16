@@ -36,13 +36,14 @@ struct RepoDelta: Hashable {
 
 
 //MARK: -Issues
+// Dashboard
 struct RepoIssue: Decodable, Identifiable, Hashable {
     let id: Int
     let number: Int
     let title: String
     let url: URL
 }
-
+// Detail
 struct GHIssue: Identifiable, Hashable {
     let id: String
     let number: Int
@@ -57,6 +58,7 @@ struct GHIssue: Identifiable, Hashable {
 
 
 //MARK: -Commits
+// Dashboard
 struct RepoCommit: Decodable, Identifiable, Hashable {
     let id: String        // commit SHA
     let message: String
