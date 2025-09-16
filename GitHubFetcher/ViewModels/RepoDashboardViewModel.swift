@@ -137,7 +137,7 @@ final class RepooDashboardViewModel: ObservableObject {
             cached = fetchByFullNameNoThrow(fullName)
         }
 
-        if let apiError = error as? GitHubAPIError, apiError == .unauthorized {
+        if let apiError = error as? GitHubAPIError, case .unauthorized = apiError {
             applyUnauthorizedFallback(using: cached)
             return
         }
@@ -191,3 +191,4 @@ final class RepooDashboardViewModel: ObservableObject {
         ).first)
     }
 }
+
