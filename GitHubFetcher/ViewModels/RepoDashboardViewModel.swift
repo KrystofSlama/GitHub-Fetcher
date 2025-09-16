@@ -44,7 +44,6 @@ final class RepooDashboardViewModel: ObservableObject {
     }
 
     // MARK: - Public API
-
     /// Call in `.task` on view appear, and from `.refreshable`.
     func load() async {
         isLoading = true
@@ -62,10 +61,10 @@ final class RepooDashboardViewModel: ObservableObject {
         }
     }
 
+    
     func refresh() async { await load() }
 
     // MARK: - Internals
-
     /// Applies fresh GraphQL data:
     /// - finds existing SD row (by id, then by fullName),
     /// - computes delta if row existed,
