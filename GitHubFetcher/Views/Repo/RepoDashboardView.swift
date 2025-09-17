@@ -11,7 +11,7 @@ import SwiftData
 struct RepoDashboardView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.colorScheme) var colorScheme
-    @StateObject private var vm: RepooDashboardViewModel
+    @StateObject private var vm: RepoDashboardViewModel
 
     @ObservedObject var searchVM: SearchViewModel
     
@@ -19,7 +19,7 @@ struct RepoDashboardView: View {
     @State private var isExpandedIssues: Bool = false
 
     init(fullName: String, context: ModelContext, searchVM: SearchViewModel, service: GitHubService) {
-        _vm = StateObject(wrappedValue: RepooDashboardViewModel(
+        _vm = StateObject(wrappedValue: RepoDashboardViewModel(
             fullName: fullName,
             context: context,
             service: service

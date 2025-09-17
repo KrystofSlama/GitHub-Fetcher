@@ -15,7 +15,7 @@ protocol GitHubGraphQLServicing {
 }
 
 @MainActor
-final class RepooDashboardViewModel: ObservableObject {
+final class RepoDashboardViewModel: ObservableObject {
     // UI state
     @Published var repo: TrackedRepo?
     @Published var delta: RepoDelta?
