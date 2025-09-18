@@ -44,7 +44,7 @@ struct RepoIssue: Decodable, Identifiable, Hashable {
     let url: URL
 }
 // Detail
-struct GHIssue: Identifiable, Hashable {
+struct RepoIssueDetail: Identifiable, Hashable {
     let id: String
     let number: Int
     let title: String

@@ -15,6 +15,9 @@ struct RepoIssueView: View {
     var body: some View {
         Text(repoName)
         Text("\(issueNumber)")
+            .onAppear {
+                
+            }
     }
 }
 

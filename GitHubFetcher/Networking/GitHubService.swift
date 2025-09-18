@@ -104,7 +104,9 @@ final class GitHubService {
     }
     
     // Refractor this
-    // MARK: -Fetching repo data
+    // MARK: -Fetching Repo data
+    
+    // RepoDashboard data
     func fetchRepoDetailGraphQL(fullName: String) async throws -> RepoDetail {
         guard let token, !token.isEmpty else { throw GitHubAPIError.unauthorized }
 
@@ -262,6 +264,82 @@ final class GitHubService {
             issues: issues,
             commits: commits
         )
+    }
+    
+    // Issue data
+    func fetchIssueData(fullName: String, number: Int) async throws -> RepoIssueDetail {
+        guard let token, !token.isEmpty else { throw GitHubAPIError.unauthorized }
+        
+        struct Body: Encodable { let query: String; let variables: Vars }
+        struct Vars: Encodable { let owner: String; let number: Int }
+        
+        let query = """
+                query IssueDetail($owner:String!, $name:String!, $number:Int!) {
+                  repository(owner:$owner, name:$name) {
+                    issue(number:$number) {
+                      id number title url state createdAt
+                      author { login }
+                      labels(first:50) { nodes { id name color } }
+                      comments { totalCount }
+                    }
+                  }
+                }
+                """
+        
+        let body = Body(query: query, variables: .init(owner: fullName, number: number))
+        
+        var req = URLRequest(url: graphql)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
+        req.httpBody = try JSONEncoder().encode(body)
+
+        let (data, resp) = try await session.data(for: req)
+        guard let http = resp as? HTTPURLResponse else { throw GitHubAPIError.network }
+        logRateLimit(from: http)
+        
+        struct Resp: Decodable {
+                    struct D: Decodable {
+                        struct Repo: Decodable {
+                            struct Issue: Decodable {
+                                let id: String
+                                let number: Int
+                                let title: String
+                                let url: URL
+                                let state: String
+                                let createdAt: String
+                                struct A: Decodable { let login: String? }
+                                let author: A?
+                                struct LWrap: Decodable { struct L: Decodable { let id: String; let name: String; let color: String } ; let nodes: [L] }
+                                let labels: LWrap
+                                struct C: Decodable { let totalCount: Int }
+                                let comments: C
+                            }
+                            let issue: Issue?
+                        }
+                        let repository: Repo?
+                    }
+                    let data: D
+                }
+
+                let decoded = try JSONDecoder().decode(Resp.self, from: data)
+                guard let n = decoded.data.repository?.issue else { throw GitHubAPIError.decoding }
+
+                let created = ISO8601DateFormatter().date(from: n.createdAt) ?? .distantPast
+
+                return RepoIssueDetail(
+                    id: n.id,
+                    number: n.number,
+                    title: n.title,
+                    state: n.state,
+                    author: n.author?.login,
+                    createdAt: created,
+                    commentsCount: n.comments.totalCount,
+                    labels: n.labels.nodes.map { GHLabel(id: $0.id, name: $0.name, color: $0.color) },
+                    url: n.url
+                )
     }
 }
 
