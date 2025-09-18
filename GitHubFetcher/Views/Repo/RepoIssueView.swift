@@ -5,24 +5,24 @@
 //  Created by Kryštof Sláma on 15.09.2025.
 //
 
+import SwiftData
 import SwiftUI
 
 struct RepoIssueView: View {
     @Environment(\.colorScheme) private var colorScheme
-    @StateObject private var viewModel: RepoIssueViewModel
+    @ObservedObject private var viewModel: RepoDashboardViewModel
 
     private let repoName: String
     private let issueNumber: Int
 
-    init(repoName: String, issueNumber: Int, service: GitHubService, initialIssue: RepoIssueDetail? = nil) {
+    private var issueDetail: RepoIssueDetail? { viewModel.issueDetail(for: issueNumber) }
+    private var isLoading: Bool { viewModel.isIssueDetailLoading(issueNumber) }
+    private var errorText: String? { viewModel.issueDetailError(for: issueNumber) }
+
+    init(viewModel: RepoDashboardViewModel, repoName: String, issueNumber: Int) {
+        _viewModel = ObservedObject(wrappedValue: viewModel)
         self.repoName = repoName
         self.issueNumber = issueNumber
-        _viewModel = StateObject(wrappedValue: RepoIssueViewModel(
-            repoFullName: repoName,
-            issueNumber: issueNumber,
-            service: service,
-            initialIssue: initialIssue
-        ))
     }
 
     var body: some View {
@@ -35,17 +35,17 @@ struct RepoIssueView: View {
         .background(Color(.systemGray6))
         .navigationTitle("#\(issueNumber)")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await viewModel.load() }
-        .refreshable { await viewModel.refresh() }
+        .task { await viewModel.loadIssueDetail(number: issueNumber) }
+        .refreshable { await viewModel.refreshIssueDetail(number: issueNumber) }
         .toolbar {
-            if let url = viewModel.issue?.url {
+            if let url = issueDetail?.url {
                 ToolbarItem(placement: .topBarTrailing) {
                     Link("Open on GitHub", destination: url)
                 }
             }
         }
         .overlay(alignment: .bottom) {
-            if let message = viewModel.errorText {
+            if let message = errorText {
                 errorBanner(message)
                     .padding()
             }
@@ -54,7 +54,7 @@ struct RepoIssueView: View {
 
     @ViewBuilder
     private var content: some View {
-        if let issue = viewModel.issue {
+        if let issue = issueDetail {
             VStack(alignment: .leading, spacing: 12) {
                 Text(issue.title)
                     .font(.title2)
@@ -95,7 +95,7 @@ struct RepoIssueView: View {
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(cardBackground)
-        } else if viewModel.isLoading {
+        } else if isLoading {
             ProgressView("Loading…")
                 .frame(maxWidth: .infinity)
                 .padding(.top, 32)
@@ -196,25 +196,69 @@ struct RepoIssueView: View {
 }
 
 #Preview {
-    NavigationStack {
+    let container = try! ModelContainer(for: TrackedRepo.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+    let previewService = PreviewGraphQLService()
+    let vm = RepoDashboardViewModel(
+        fullName: "apple/swift",
+        context: container.mainContext,
+        service: previewService
+    )
+    vm.injectIssueDetailForPreview(
+        RepoIssueDetail(
+            id: "MDU6SXNzdWUx",
+            number: 12345,
+            title: "Sample issue title used for previews",
+            state: "open",
+            author: "swift-developer",
+            createdAt: Date(),
+            commentsCount: 42,
+            labels: [
+                GHLabel(id: "MDU6TGFiZWwx", name: "bug", color: "d73a4a"),
+                GHLabel(id: "MDU6TGFiZWwy", name: "enhancement", color: "a2eeef")
+            ],
+            url: URL(string: "https://github.com/apple/swift/issues/12345")!
+        )
+    )
+
+    return NavigationStack {
         RepoIssueView(
+            viewModel: vm,
             repoName: "apple/swift",
-            issueNumber: 12345,
-            service: GitHubService(),
-            initialIssue: RepoIssueDetail(
-                id: "MDU6SXNzdWUx",
-                number: 12345,
-                title: "Sample issue title used for previews",
-                state: "open",
-                author: "swift-developer",
-                createdAt: Date(),
-                commentsCount: 42,
-                labels: [
-                    GHLabel(id: "MDU6TGFiZWwx", name: "bug", color: "d73a4a"),
-                    GHLabel(id: "MDU6TGFiZWwy", name: "enhancement", color: "a2eeef")
-                ],
-                url: URL(string: "https://github.com/apple/swift/issues/12345")!
-            )
+            issueNumber: 12345
         )
     }
 }
+
+#if DEBUG
+private struct PreviewGraphQLService: GitHubGraphQLServicing {
+    func fetchRepoDetailGraphQL(fullName: String) async throws -> RepoDetail {
+        RepoDetail(
+            id: 1,
+            fullName: fullName,
+            rDescription: "",
+            htmlURL: URL(string: "https://github.com/\(fullName)")!,
+            starsCount: 0,
+            forksCount: 0,
+            openIssuesCount: 0,
+            openPRsCount: 0,
+            watchersCount: 0,
+            issues: [],
+            commits: []
+        )
+    }
+
+    func fetchIssueData(fullName: String, number: Int) async throws -> RepoIssueDetail {
+        RepoIssueDetail(
+            id: "preview",
+            number: number,
+            title: "Preview Issue",
+            state: "open",
+            author: "previewer",
+            createdAt: Date(),
+            commentsCount: 0,
+            labels: [],
+            url: URL(string: "https://github.com/\(fullName)/issues/\(number)")!
+        )
+    }
+}
+#endif

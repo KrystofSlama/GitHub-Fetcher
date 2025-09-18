@@ -12,6 +12,7 @@ import SwiftData
 // Use the exact function you added to GitHubService
 protocol GitHubGraphQLServicing {
     func fetchRepoDetailGraphQL(fullName: String) async throws -> RepoDetail
+    func fetchIssueData(fullName: String, number: Int) async throws -> RepoIssueDetail
 }
 
 @MainActor
@@ -24,6 +25,8 @@ final class RepoDashboardViewModel: ObservableObject {
     @Published var isOffline = false
     @Published var isLoading = false
     @Published var errorText: String?
+
+    @Published private var issueDetailStates: [Int: IssueDetailState] = [:]
 
     // Inputs
     private let fullName: String            // "owner/name" for GraphQL
@@ -61,8 +64,51 @@ final class RepoDashboardViewModel: ObservableObject {
         }
     }
 
-    
+
     func refresh() async { await load() }
+
+    // MARK: - Issue details
+
+    func issueDetail(for number: Int) -> RepoIssueDetail? {
+        issueDetailStates[number]?.detail
+    }
+
+    func isIssueDetailLoading(_ number: Int) -> Bool {
+        issueDetailStates[number]?.isLoading ?? false
+    }
+
+    func issueDetailError(for number: Int) -> String? {
+        issueDetailStates[number]?.errorText
+    }
+
+    func loadIssueDetail(number: Int, force: Bool = false) async {
+        var state = issueDetailStates[number] ?? IssueDetailState()
+        if state.isLoading { return }
+        if !force, state.hasLoadedOnce, state.detail != nil { return }
+
+        state.isLoading = true
+        issueDetailStates[number] = state
+
+        do {
+            let detail = try await service.fetchIssueData(fullName: fullName, number: number)
+            state.detail = detail
+            state.errorText = nil
+            state.hasLoadedOnce = true
+        } catch GitHubAPIError.unauthorized {
+            state.errorText = "Missing or invalid GitHub token. Update it in Settings to load issue details."
+        } catch GitHubAPIError.notFound {
+            state.errorText = "Issue #\(number) could not be found."
+        } catch {
+            state.errorText = "Failed to load issue details. Check your connection and try again."
+        }
+
+        state.isLoading = false
+        issueDetailStates[number] = state
+    }
+
+    func refreshIssueDetail(number: Int) async {
+        await loadIssueDetail(number: number, force: true)
+    }
 
     // MARK: - Internals
     /// Applies fresh GraphQL data:
@@ -191,4 +237,26 @@ final class RepoDashboardViewModel: ObservableObject {
         ).first)
     }
 }
+
+extension RepoDashboardViewModel {
+    fileprivate struct IssueDetailState {
+        var detail: RepoIssueDetail?
+        var isLoading = false
+        var errorText: String?
+        var hasLoadedOnce = false
+    }
+}
+
+#if DEBUG
+extension RepoDashboardViewModel {
+    func injectIssueDetailForPreview(_ detail: RepoIssueDetail) {
+        issueDetailStates[detail.number] = IssueDetailState(
+            detail: detail,
+            isLoading: false,
+            errorText: nil,
+            hasLoadedOnce: true
+        )
+    }
+}
+#endif
 
