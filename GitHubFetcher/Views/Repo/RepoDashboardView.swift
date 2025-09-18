@@ -14,6 +14,7 @@ struct RepoDashboardView: View {
     @StateObject private var vm: RepoDashboardViewModel
 
     @ObservedObject var searchVM: SearchViewModel
+    private let service: GitHubService
     
     // Expandable lists
     @State private var isExpandedIssues: Bool = false
@@ -25,6 +26,7 @@ struct RepoDashboardView: View {
             service: service
         ))
         self.searchVM = searchVM
+        self.service = service
     }
 
     var body: some View {
@@ -380,7 +382,11 @@ struct RepoDashboardView: View {
                                 VStack(spacing: 8) {
                                     ForEach(vm.issues) { issue in
                                         NavigationLink {
-                                            RepoIssueView(repoName: r.fullName, issueNumber: issue.number)
+                                            RepoIssueView(
+                                                repoName: r.fullName,
+                                                issueNumber: issue.number,
+                                                service: service
+                                            )
                                         } label: {
                                             HStack(alignment: .center, spacing: 6) {
                                                 Image(systemName: "circle.fill")
