@@ -9,6 +9,7 @@ import SwiftData
 import SwiftUI
 
 struct RepoIssueView: View {
+<<<<<<< HEAD
     @Environment(\.colorScheme) private var colorScheme
     @ObservedObject private var viewModel: RepoDashboardViewModel
 
@@ -25,11 +26,19 @@ struct RepoIssueView: View {
         self.issueNumber = issueNumber
     }
 
+=======
+    let repoName : String
+    
+    let issueNumber : Int
+    
+>>>>>>> parent of 9bd6211 (Add issue detail view and GraphQL fetch support)
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                content
+        Text(repoName)
+        Text("\(issueNumber)")
+            .onAppear {
+                
             }
+<<<<<<< HEAD
             .padding()
         }
         .background(Color(.systemGray6))
@@ -192,10 +201,13 @@ struct RepoIssueView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.red.opacity(colorScheme == .dark ? 0.25 : 0.15))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+=======
+>>>>>>> parent of 9bd6211 (Add issue detail view and GraphQL fetch support)
     }
 }
 
 #Preview {
+<<<<<<< HEAD
     let container = try! ModelContainer(for: TrackedRepo.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
     let previewService = PreviewGraphQLService()
     let vm = RepoDashboardViewModel(
@@ -227,6 +239,9 @@ struct RepoIssueView: View {
             issueNumber: 12345
         )
     }
+=======
+    RepoIssueView(repoName: "Test", issueNumber: 123)
+>>>>>>> parent of 9bd6211 (Add issue detail view and GraphQL fetch support)
 }
 
 #if DEBUG

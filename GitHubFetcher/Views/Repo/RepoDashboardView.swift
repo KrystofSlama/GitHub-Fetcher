@@ -14,7 +14,11 @@ struct RepoDashboardView: View {
     @StateObject private var vm: RepoDashboardViewModel
 
     @ObservedObject var searchVM: SearchViewModel
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> parent of 9bd6211 (Add issue detail view and GraphQL fetch support)
     // Expandable lists
     @State private var isExpandedIssues: Bool = false
 
@@ -380,11 +384,15 @@ struct RepoDashboardView: View {
                                 VStack(spacing: 8) {
                                     ForEach(vm.issues) { issue in
                                         NavigationLink {
+<<<<<<< HEAD
                                             RepoIssueView(
                                                 viewModel: vm,
                                                 repoName: r.fullName,
                                                 issueNumber: issue.number
                                             )
+=======
+                                            RepoIssueView(repoName: r.fullName, issueNumber: issue.number)
+>>>>>>> parent of 9bd6211 (Add issue detail view and GraphQL fetch support)
                                         } label: {
                                             HStack(alignment: .center, spacing: 6) {
                                                 Image(systemName: "circle.fill")

@@ -269,30 +269,25 @@ final class GitHubService {
     // Issue data
     func fetchIssueData(fullName: String, number: Int) async throws -> RepoIssueDetail {
         guard let token, !token.isEmpty else { throw GitHubAPIError.unauthorized }
-
-        let parts = fullName.split(separator: "/", maxSplits: 1).map(String.init)
-        guard parts.count == 2 else { throw GitHubAPIError.badRepoFormat }
-        let owner = parts[0]
-        let name = parts[1]
-
-        struct Body: Encodable { let query: String; let variables: Variables }
-        struct Variables: Encodable { let owner: String; let name: String; let number: Int }
-
+        
+        struct Body: Encodable { let query: String; let variables: Vars }
+        struct Vars: Encodable { let owner: String; let number: Int }
+        
         let query = """
-        query IssueDetail($owner:String!, $name:String!, $number:Int!) {
-          repository(owner:$owner, name:$name) {
-            issue(number:$number) {
-              id number title url state createdAt
-              author { login }
-              labels(first:50) { nodes { id name color } }
-              comments { totalCount }
-            }
-          }
-        }
-        """
-
-        let body = Body(query: query, variables: .init(owner: owner, name: name, number: number))
-
+                query IssueDetail($owner:String!, $name:String!, $number:Int!) {
+                  repository(owner:$owner, name:$name) {
+                    issue(number:$number) {
+                      id number title url state createdAt
+                      author { login }
+                      labels(first:50) { nodes { id name color } }
+                      comments { totalCount }
+                    }
+                  }
+                }
+                """
+        
+        let body = Body(query: query, variables: .init(owner: fullName, number: number))
+        
         var req = URLRequest(url: graphql)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -304,71 +299,47 @@ final class GitHubService {
         let (data, resp) = try await session.data(for: req)
         guard let http = resp as? HTTPURLResponse else { throw GitHubAPIError.network }
         logRateLimit(from: http)
-
-        switch http.statusCode {
-        case 200...299:
-            break
-        case 401:
-            if let s = String(data: data, encoding: .utf8) { print("GraphQL IssueDetail 401:", s) }
-            throw GitHubAPIError.unauthorized
-        case 403:
-            if let s = String(data: data, encoding: .utf8) { print("GraphQL IssueDetail 403:", s) }
-            throw GitHubAPIError.rateLimited
-        case 404:
-            throw GitHubAPIError.notFound
-        default:
-            if let s = String(data: data, encoding: .utf8) { print("GraphQL IssueDetail error body:", s) }
-            throw GitHubAPIError.unknown
-        }
-
-        struct Response: Decodable {
-            struct DataContainer: Decodable {
-                struct Repository: Decodable {
-                    struct Issue: Decodable {
-                        struct Author: Decodable { let login: String? }
-                        struct Labels: Decodable {
-                            struct Node: Decodable { let id: String; let name: String; let color: String }
-                            let nodes: [Node]
+        
+        struct Resp: Decodable {
+                    struct D: Decodable {
+                        struct Repo: Decodable {
+                            struct Issue: Decodable {
+                                let id: String
+                                let number: Int
+                                let title: String
+                                let url: URL
+                                let state: String
+                                let createdAt: String
+                                struct A: Decodable { let login: String? }
+                                let author: A?
+                                struct LWrap: Decodable { struct L: Decodable { let id: String; let name: String; let color: String } ; let nodes: [L] }
+                                let labels: LWrap
+                                struct C: Decodable { let totalCount: Int }
+                                let comments: C
+                            }
+                            let issue: Issue?
                         }
-                        struct Comments: Decodable { let totalCount: Int }
-
-                        let id: String
-                        let number: Int
-                        let title: String
-                        let url: URL
-                        let state: String
-                        let createdAt: Date
-                        let author: Author?
-                        let labels: Labels
-                        let comments: Comments
+                        let repository: Repo?
                     }
-
-                    let issue: Issue?
+                    let data: D
                 }
 
-                let repository: Repository?
-            }
+                let decoded = try JSONDecoder().decode(Resp.self, from: data)
+                guard let n = decoded.data.repository?.issue else { throw GitHubAPIError.decoding }
 
-            let data: DataContainer
-        }
+                let created = ISO8601DateFormatter().date(from: n.createdAt) ?? .distantPast
 
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        let decoded = try decoder.decode(Response.self, from: data)
-
-        guard let node = decoded.data.repository?.issue else { throw GitHubAPIError.decoding }
-
-        return RepoIssueDetail(
-            id: node.id,
-            number: node.number,
-            title: node.title,
-            state: node.state,
-            author: node.author?.login,
-            createdAt: node.createdAt,
-            commentsCount: node.comments.totalCount,
-            labels: node.labels.nodes.map { GHLabel(id: $0.id, name: $0.name, color: $0.color) },
-            url: node.url
-        )
+                return RepoIssueDetail(
+                    id: n.id,
+                    number: n.number,
+                    title: n.title,
+                    state: n.state,
+                    author: n.author?.login,
+                    createdAt: created,
+                    commentsCount: n.comments.totalCount,
+                    labels: n.labels.nodes.map { GHLabel(id: $0.id, name: $0.name, color: $0.color) },
+                    url: n.url
+                )
     }
 }
 
